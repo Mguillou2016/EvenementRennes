@@ -7,6 +7,7 @@ namespace EvenementRennes.Models
 {
     public class Evenement
     {
+        public Guid ID { get; set; }
         public string lieu { get; set; }
         public DateTime date { get; set; }
         public TimeSpan duree { get; set; }
