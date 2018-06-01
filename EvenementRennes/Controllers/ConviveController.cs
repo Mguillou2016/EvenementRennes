@@ -18,7 +18,7 @@ namespace EvenementRennes.Controllers
         {
             listeI.Add("test");
             listE.Add(new Evenement(Guid.NewGuid(), "rennes", new DateTime(), new TimeSpan(), "a", "Mox dicta finierat, multitudo omnis ad, quae imperator voluit, promptior laudato consilio consensit in pacem ea ratione maxime percita, quod norat expeditionibus crebris fortunam eius in malis tantum civilibus vigilasse, cum autem bella moverentur externa, accidisse plerumque luctuosa, icto post haec foedere gentium ritu perfectaque sollemnitate imperator Mediolanum ad hiberna discessit.", listeI));
-            listE.Add(new Evenement(Guid.NewGuid(), "rennes", new DateTime(), new TimeSpan(), "a", "b", listeI));
+            listE.Add(new Evenement(Guid.NewGuid(), "Parc du Thabor", new DateTime(), new TimeSpan(), "a", "b", listeI));
             listE.Add(new Evenement(Guid.NewGuid(), "rennes", new DateTime(), new TimeSpan(), "a", "b", listeI));
             listE.Add(new Evenement(Guid.NewGuid(), "rennes", new DateTime(), new TimeSpan(), "a", "b", listeI));
 
@@ -52,7 +52,10 @@ namespace EvenementRennes.Controllers
         {
             Debug.WriteLine("inside");
             Debug.WriteLine("adresse", collection.Get("adresse"));
+            Debug.WriteLine("lieu", collection.Get("lieu"));
             ViewData["adresse"] =  collection.Get("adresse");
+            ViewData["lieu"] = collection.Get("lieu");
+            
 
             /*foreach(string element in collection)
             {
