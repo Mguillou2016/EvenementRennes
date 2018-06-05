@@ -1,10 +1,218 @@
-﻿
-<form method="post" action="@Url.Action("TrajetConvive", "Convive")">
+﻿@{
+    var lieu = @ViewData["lieu"];
+}
+<form method="post" action="@Url.Action("TrajetConvive", "Convive")" style="margin-top: 2%; margin-bottom: 2%;">
     <div class="form-group">
+        <input style="display: none" type="text" name="lieu" value="@ViewData["lieu"]" class="form-control" id="lieu" placeholder="Entrez votre adresse de départ">
         <input type="text" name="adresse" value="@ViewData["adresse"]" class="form-control" id="adresse" placeholder="Entrez votre adresse de départ">
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 
-<iframe width="600" height="450" frameborder="0" style="border:0"
-        src='https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=@ViewData["lieu"]&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs' allowfullscreen></iframe>
+<iframe id="maps" width="600" height="450" frameborder="0" style="border: 0;"
+        src='https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=@ViewData["lieu"]&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs' allowfullscreen>
+</iframe>
+
+<table id="PTable" class="table" style="width: 50%;">
+    <thead>
+    <tr>
+        <th>
+            Parking
+        </th>
+        <th>
+            Places
+        </th>
+    </tr>
+    </thead>
+    <tbody id='bodyT'>
+    <tr></tr>
+    </tbody>
+</table>
+
+<script>
+    window.onload = function() {
+        /*$.ajax({
+            type: "GET",
+            url: "http://data.citedia.com/r1/parks/timetable-and-prices",
+            dataType: "text/csv; charset = UTF-8",
+            success: function(data) { console.log('process'); processCSV(data);}
+        });*/
+        VanillaRequests('GET', 'http://data.citedia.com/r1/parks/timetable-and-prices', {}, {}, true).then(function(response)
+            {
+                console.log('response', response);
+                processCSV(response);
+            });
+        let location;
+        var xhr = new XMLHttpRequest();
+        xhr.open('get',
+            "https://maps.googleapis.com/maps/api/geocode/json?address=@ViewData["lieu"]&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs");
+        xhr.send();
+        xhr.onreadystatechange = function() { 
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                location = JSON.parse(this.responseText).results[0].geometry.location;
+                NearestCity(location.lat, location.lng);
+            }
+        }
+        
+       
+
+    }
+
+// Convert Degress to Radians
+    function Deg2Rad(deg) {
+        return deg * Math.PI / 180;
+    }
+
+    function PythagorasEquirectangular(lat1, lon1, lat2, lon2) {
+        lat1 = Deg2Rad(lat1);
+        lat2 = Deg2Rad(lat2);
+        lon1 = Deg2Rad(lon1);
+        lon2 = Deg2Rad(lon2);
+        var R = 6371; // km
+        var x = (lon2 - lon1) * Math.cos((lat1 + lat2) / 2);
+        var y = (lat2 - lat1);
+        var d = Math.sqrt(x * x + y * y) * R;
+        return d;
+    }
+
+    var lat = 20; // user's latitude
+    var lon = 40; // user's longitude
+
+    function NearestCity(latitude, longitude) {
+        let parks = [];
+        let parkings = [];
+        VanillaRequests('get', 'http://data.citedia.com/r1/parks', {}, {}).then((responseText) => {
+            JSON.parse(responseText).parks.forEach((park) => {
+                if (park.parkInformation.free > 10) {
+                    parks.push(park);
+                }
+            })
+            for (let i = 0; i < parks.length; i++) {
+                VanillaRequests('get',
+                    "https://maps.googleapis.com/maps/api/geocode/json?address=parking%20" +
+                    parks[i].parkInformation.name +
+                    ", rennes&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs",
+                    {},
+                    {}).then((response) => {
+                    console.log('response', parks);
+                    parkings.push({
+                        'id': parks[i].id,
+                        'coordinates': JSON.parse(response).results[0].geometry.location,
+                        'places': parks[i].parkInformation.free
+                    });
+                    if (parkings.length === parks.length) {
+                        parkings = determinateClosestParkings(latitude, longitude, parkings);
+                        parkings.sort(function(a, b) {
+                            return a.dif - b.dif;
+                        });
+                        let i = 0;
+                        parkings.forEach((parking) => {
+                            if (i < 3) {
+                                insRow(parking);    
+                            }
+                            i++
+                        });
+                        document.getElementById("maps").src =
+                            'https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=' +
+                            parkings[0].coordinates.lat +
+                            ',' +
+                            parkings[0].coordinates.lng +
+                            '&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs'
+                    }
+                });
+            }
+        })
+    }
+
+    function changeMapsView(lat, lng) {
+        document.getElementById("maps").src =
+            'https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=' +
+            lat +
+            ',' +
+            lng +
+            '&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs';
+    }
+
+    function insRow(parking) {
+        var newRow = $("<tr>");
+        var cols = "";
+        cols += '<td>' + parking.id + '</td>';
+        cols += '<td>' + parking.places + '</td>';
+        cols += '<td><button class="btn" onclick="changeMapsView(' +
+            parking.coordinates.lat +
+            ',' +
+            parking.coordinates.lng +
+            ' )">trajet</button></td>';
+        newRow.append(cols);
+        $("table").append(newRow);
+    }
+    
+    
+    /*$(document).ready(function() {
+        $.ajax({
+            type: "GET",
+            url: "http://data.citedia.com/r1/parks/timetable-and-prices",
+            dataType: "text",
+            success: function(data) {processData(data);}
+        });
+    });*/
+
+    function processCSV(allText) {
+        console.log('inside')
+        console.log('alltext',allText);
+        var record_num = 5;  // or however many elements there are in each row
+        var allTextLines = allText.split(/\r\n|\n/);
+//        var allTextLines = allText.split(/\n/)²
+        var entries = allTextLines[0].split(',');
+        var lines = [];
+
+        var headings = entries.splice(0,record_num);
+        while (entries.length>0) {
+            var tarr = [];
+            for (var j=0; j<record_num; j++) {
+                tarr.push(headings[j]+":"+entries.shift());
+            }
+            lines.push(tarr);
+        }
+         alert(lines);
+    }
+
+    function determinateClosestParkings(latitude, longitude, parkings) {
+        parkings.forEach((parking) => {
+            var dif = PythagorasEquirectangular(latitude, longitude, parking.coordinates.lat, parking.coordinates.lng);
+            parking['dif'] = dif;
+        });
+        return parkings;
+    }
+
+    function VanillaRequests(method, adress, arguments, parameters, csv) {
+        return new Promise((resolve, reject) => {
+            var xhr = new XMLHttpRequest();
+            if (method === 'GET' && arguments !== {}) {
+                Object.keys(arguments).forEach((key, index) => {
+                    if (index !== (arguments.length - 1)) {
+                        adress = adress + '?' + key + '=' + arguments(key) + '&';
+                    } else {
+                        adress = adress + '?' + key + '=' + arguments(key);
+                    }
+                });
+                xhr.open(method, adress);
+                xhr.send();
+            } else if (method === 'POST' && parameters !== {}) {
+                xhr.open(method, adress);
+                xhr.send(parameters);
+            } else {
+                if (csv === true) {
+                    xhr.overrideMimeType('text/csv');
+                }
+                xhr.open(method, adress);
+                xhr.send();
+            }
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    resolve(xhr.responseText);
+                }
+            }
+        })
+    }
+</script>
