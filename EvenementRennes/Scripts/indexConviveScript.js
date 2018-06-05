@@ -9,27 +9,35 @@ function myFunction(Ref) {
     }
 }
 
-function VanillaRequests(method, adress, arguments, parameters) {
-    var xhr = new XMLHttpRequest();
-    if (method === 'GET') {
-        Object.keys(arguments).forEach((key, index) => {
-            if (index !== (arguments.length - 1)) {
-            adress = adress + '?' + key + '=' + arguments(key) + '&';
+function VanillaRequests(method, adress, arguments, parameters, csv) {
+    return new Promise((resolve, reject) => {
+        var xhr = new XMLHttpRequest();
+        if (method === 'GET' && arguments !== {}) {
+            Object.keys(arguments).forEach((key, index) => {
+                if (index !== (arguments.length - 1)) {
+                    adress = adress + '?' + key + '=' + arguments(key) + '&';
+                } else {
+                    adress = adress + '?' + key + '=' + arguments(key);
+                }
+            });
+            xhr.open(method, adress);
+            xhr.send();
+        } else if (method === 'POST' && parameters !== {}) {
+            xhr.open(method, adress);
+            xhr.send(parameters);
         } else {
-            adress = adress + '?' + key + '=' + arguments(key);
+            if (csv === true) {
+                xhr.overrideMimeType('text/csv');
+            }
+            xhr.open(method, adress);
+            xhr.send();
         }
-    });
-        xhr.open(method, adress);
-        xhr.send();
-    } else if (method === POST) {
-        xhr.open(method, adress);
-        xhr.send(parameters);
-    }
-    xhr.onreadystatechange = function() { //Call a function when the state changes.
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            alert(xhr.responseText);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                resolve(xhr.responseText);
+            }
         }
-    }
+    })
 }
 
 
