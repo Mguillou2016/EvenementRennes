@@ -1,6 +1,8 @@
 ﻿@{
     var lieu = @ViewData["lieu"];
 }
+<div id="loader"></div>
+
 <h3 style=" font-weight: bold;">Evenement: @ViewData["lieu"]</h3>
 <div id="TrajetBody" style="display: flex; width: 100%; margin-top: 5%;">
     <div id="leftBodyPart" style="display: flex; flex-direction: column; width: 50%;">
@@ -31,12 +33,15 @@
     @* <iframe id="maps" width="600" height="450" frameborder="0" style="border: 0;" *@
     @*         src='https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=@ViewData["lieu"]&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs' allowfullscreen> *@
     @* </iframe> *@
-    <iframe id="maps" width="600" height="450" frameborder="0" style="border: 0;"></iframe>
+    <iframe onload="loaded()" id="maps" width="600" height="450" frameborder="0" style="border: 0;"></iframe>
 </div>
 
 
 <script>
     window.onload = function() {
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("TrajetBody").style.display = "none";
+
         /*$.ajax({
             type: "GET",
             url: "http://data.citedia.com/r1/parks/timetable-and-prices",
@@ -44,9 +49,9 @@
             success: function(data) { console.log('process'); processCSV(data);}
         });*/
         VanillaRequests('GET', 'http://data.citedia.com/r1/parks/timetable-and-prices', {}, {}, true).then(function(response)
-            {
-                processCSV(response);
-            });
+        {
+            processCSV(response);
+        });
         var location;
         var xhr = new XMLHttpRequest();
         xhr.open('get',
@@ -92,13 +97,14 @@
                     parks.push(park);
                 }
             })
-            for (var i = 0; i < parks.length; i++) {
+            for (let i = 0; i < parks.length; i++) {
                 VanillaRequests('get',
                     "https://maps.googleapis.com/maps/api/geocode/json?address=parking%20" +
                     parks[i].parkInformation.name +
                     ", rennes&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs",
                     {},
                     {}).then((response) => {
+                    console.log('parks', parks)
                     parkings.push({
                         'id': parks[i].id,
                         'coordinates': JSON.parse(response).results[0].geometry.location,
@@ -110,25 +116,32 @@
                         parkings.sort(function(a, b) {
                             return a.dif - b.dif;
                         });
-                        var i = 0;
+                        let i = 0;
                         parkings.forEach((parking) => {
                             if (i < 3) {
                                 insRow(parking);    
                             }
-                            i++
+                            i++;
                         });
+                       
                         document.getElementById("maps").src =
                             'https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=' +
                             parkings[0].coordinates.lat +
                             ',' +
                             parkings[0].coordinates.lng +
-                            '&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs'
+                            '&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs';
+                       
                     }
                 });
             }
         })
     }
 
+    function loaded(){
+        document.getElementById("loader").style.display = "none";
+        document.getElementById("TrajetBody").style.display = "flex";
+    };
+    
     function changeMapsView(lat, lng) {
         document.getElementById("maps").src =
             'https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=' +
@@ -150,6 +163,7 @@
             ' )">trajet</button></td>';
         newRow.append(cols);
         $("table").append(newRow);
+        
     }
     
     
@@ -166,7 +180,7 @@
         var allTextLines = allText.split(/\r\n|\n/);
         var allTextParts= [];
         allTextLines.forEach((line) => {
-             allTextParts.push(line.split(';'));    
+            allTextParts.push(line.split(';'));    
         });
         var tarifsParkings = [];
         allTextParts.forEach((part) => {
@@ -245,3 +259,57 @@
         })
     }
 </script>
+
+
+<style>
+    #loader {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        z-index: 1;
+        width: 150px;
+        height: 150px;
+        margin: -75px 0 0 -75px;
+        border: 16px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 16px solid #3498db;
+        width: 120px;
+        height: 120px;
+        -webkit-animation: spin 2s linear infinite;
+        animation: spin 2s linear infinite;
+    }
+
+    @@-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+    }
+
+    @@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+    }
+
+    /* Add animation to "page content" */
+    .animate-bottom {
+        position: relative;
+        -webkit-animation-name: animatebottom;
+        -webkit-animation-duration: 1s;
+        animation-name: animatebottom;
+        animation-duration: 1s
+    }
+
+    @@-webkit-keyframes animatebottom {
+    from { bottom:-100px; opacity:0 } 
+    to { bottom:0px; opacity:1 }
+    }
+
+    @@keyframes animatebottom { 
+    from{ bottom:-100px; opacity:0 } 
+    to{ bottom:0; opacity:1 }
+    }
+
+    #myDiv {
+        display: none;
+        text-align: center;
+    }
+</style>
