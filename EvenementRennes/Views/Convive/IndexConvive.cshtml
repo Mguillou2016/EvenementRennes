@@ -62,6 +62,8 @@
         background-color: #5cb85c;
         color: white;
     }
+    
+    
 </style>
 @{
     int i = 0;
@@ -76,11 +78,11 @@
             <div class="container" style="width: auto">
                 <div id="myCarousel" class="carousel slide" data-ride="carousel">
                     <!-- Indicators -->
-                    <ol class="carousel-indicators">
+                    @*<ol class="carousel-indicators">
                         <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
                         <li data-target="#myCarousel" data-slide-to="1"></li>
                         <li data-target="#myCarousel" data-slide-to="2"></li>
-                    </ol>
+                    </ol>*@
 
                     <!-- Wrapper for slides -->
                     <div class="carousel-inner">
@@ -138,11 +140,11 @@
                         <input hidden name="duree" id="duree" value="@ViewData["duree"]"/>
                         <input hidden type="text" name="lieu" id="lieu"/>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="margin-left: auto;margin-right: auto;display: flex;">Effectuer</button>
+                    <button type="submit" class="btn btn-primary" style="margin-left: auto; margin-right: auto; display: flex;">Effectuer</button>
                 </form>
             </div>
         </div>
-    </div>       
+    </div>
 </div>
 
 <script src="../../Scripts/indexConviveScript.js"/>
