@@ -1,33 +1,39 @@
 ﻿@{
     var lieu = @ViewData["lieu"];
 }
-<form method="post" action="@Url.Action("TrajetConvive", "Convive")" style="margin-top: 2%; margin-bottom: 2%;">
-    <div class="form-group">
-        <input style="display: none" type="text" name="lieu" value="@ViewData["lieu"]" class="form-control" id="lieu" placeholder="Entrez votre adresse de départ">
-        <input type="text" name="adresse" value="@ViewData["adresse"]" class="form-control" id="adresse" placeholder="Entrez votre adresse de départ">
+<h3 style=" font-weight: bold;">Evenement: @ViewData["lieu"]</h3>
+<div id="TrajetBody" style="display: flex; width: 100%; margin-top: 5%;">
+    <div id="leftBodyPart" style="display: flex; flex-direction: column; width: 50%;">
+        <form method="post" action="@Url.Action("TrajetConvive", "Convive")" style="margin-top: 2%; margin-bottom: 2%; display: flex">
+            <div class="form-group">
+                <label for="adresse">Adresse de départ:</label>
+                <input style="display: none" type="text" name="lieu" value="@ViewData["lieu"]" class="form-control" id="lieu" placeholder="Entrez votre adresse de départ">
+                <input type="text" name="adresse" value="@ViewData["adresse"]" class="form-control" id="adresse" placeholder="Entrez votre adresse de départ" style="display: initial">
+            </div>
+            <button type="submit" class="btn btn-success" style="margin-left: 3%;height: 50%;margin-top: 4%;">Actualiser</button>
+        </form>
+        <table id="PTable" class="table" style="width: 98%;">
+            <thead>
+            <tr>
+                <th style="text-align: center">
+                    Parking
+                </th>
+                <th style="text-align: center">
+                    Places Libres / Places Max
+                </th>
+            </tr>
+            </thead>
+            <tbody id='bodyT'>
+            <tr></tr>
+            </tbody>
+        </table>
     </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+    @* <iframe id="maps" width="600" height="450" frameborder="0" style="border: 0;" *@
+    @*         src='https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=@ViewData["lieu"]&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs' allowfullscreen> *@
+    @* </iframe> *@
+    <iframe id="maps" width="600" height="450" frameborder="0" style="border: 0;"></iframe>
+</div>
 
-<iframe id="maps" width="600" height="450" frameborder="0" style="border: 0;"
-        src='https://www.google.com/maps/embed/v1/directions?origin=@ViewData["adresse"]&destination=@ViewData["lieu"]&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs' allowfullscreen>
-</iframe>
-
-<table id="PTable" class="table" style="width: 50%;">
-    <thead>
-    <tr>
-        <th>
-            Parking
-        </th>
-        <th>
-            Places
-        </th>
-    </tr>
-    </thead>
-    <tbody id='bodyT'>
-    <tr></tr>
-    </tbody>
-</table>
 
 <script>
     window.onload = function() {
@@ -39,7 +45,7 @@
         });*/
         VanillaRequests('GET', 'http://data.citedia.com/r1/parks/timetable-and-prices', {}, {}, true).then(function(response)
             {
-                console.log('response', response);
+//                console.log('response', response);
                 processCSV(response);
             });
         let location;
@@ -94,11 +100,12 @@
                     ", rennes&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs",
                     {},
                     {}).then((response) => {
-                    console.log('response', parks);
+//                    console.log('response', parks);
                     parkings.push({
                         'id': parks[i].id,
                         'coordinates': JSON.parse(response).results[0].geometry.location,
-                        'places': parks[i].parkInformation.free
+                        'placesLibres': parks[i].parkInformation.free,
+                        'placesMax': parks[i].parkInformation.max
                     });
                     if (parkings.length === parks.length) {
                         parkings = determinateClosestParkings(latitude, longitude, parkings);
@@ -136,9 +143,9 @@
     function insRow(parking) {
         var newRow = $("<tr>");
         var cols = "";
-        cols += '<td>' + parking.id + '</td>';
-        cols += '<td>' + parking.places + '</td>';
-        cols += '<td><button class="btn" onclick="changeMapsView(' +
+        cols += '<td style="text-align: center">' + parking.id + '</td>';
+        cols += '<td style="text-align: center">' + parking.placesLibres+'/'+ parking.placesMax + '</td>';
+        cols += '<td><button class="btn btn-primary" onclick="changeMapsView(' +
             parking.coordinates.lat +
             ',' +
             parking.coordinates.lng +
@@ -158,9 +165,42 @@
     });*/
 
     function processCSV(allText) {
-        console.log('inside')
-        console.log('alltext',allText);
-        var record_num = 5;  // or however many elements there are in each row
+        /*console.log('test duree', @ViewData["duree"])
+        console.log('inside')*/
+//        console.log('alltext',allText.split(/\r\n|\n/));
+        var allTextLines = allText.split(/\r\n|\n/);
+        var allTextParts= [];
+        allTextLines.forEach((line) => {
+             allTextParts.push(line.split(';'));    
+        });
+//        console.log('allTextParts', allTextParts);
+        
+        
+        console.log('allTextParts',allTextParts)
+
+        let tarifsParkings = [];
+        allTextParts.forEach((part) => {
+//            console.log('part', part)
+            console.log('part', part[2])/*part.forEach((element) => {
+                console.log('element', element)
+            })*/
+        });
+        /*
+         example tarifs par parking
+         {
+	"parking": "colombier",
+	"Tarif24h": [{
+		"Tarifjour": [{
+			"0-1": 0.4,
+			"1+": 0.3
+		}],
+		"Tarifnuit": 0.1
+	}],
+	"Tarif24h+": "0.5/4h"
+}*/
+
+
+        /*var record_num = 5;  // or however many elements there are in each row
         var allTextLines = allText.split(/\r\n|\n/);
 //        var allTextLines = allText.split(/\n/)²
         var entries = allTextLines[0].split(',');
@@ -174,7 +214,7 @@
             }
             lines.push(tarr);
         }
-         alert(lines);
+         alert(lines);*/
     }
 
     function determinateClosestParkings(latitude, longitude, parkings) {
