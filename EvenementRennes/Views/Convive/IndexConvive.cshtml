@@ -8,7 +8,7 @@
         margin-top: 2%;
         margin-left: 2%;
         height: fit-content;
-        width: 274px;
+        width: 342px;
         /* Add shadows to create the "card" effect */
         box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
         transition: 0.3s;
@@ -38,7 +38,7 @@
         margin: 15% auto; /* 15% from the top and centered */
         padding: 20px;
         border: 1px solid #888;
-        width: 80%; /* Could be more or less, depending on screen size */
+        width: 28%; /* Could be more or less, depending on screen size */
     }
 
     /* The Close Button */
@@ -129,15 +129,16 @@
         <div class="modal-content">
             <div class="modal-header">
                 <span class="close">&times;</span>
-                <h2>Adresse de départ</h2>
+                <h2 style="text-align: center;">Adresse de départ</h2>
             </div>
             <div class="modal-body">
                 <form method="post" action="@Url.Action("TrajetConvive", "Convive")">
                     <div class="form-group">
                         <input type="text" name="adresse" class="form-control" id="adresse" placeholder="Entrez votre adresse de départ">
+                        <input hidden name="duree" id="duree" value="@ViewData["duree"]"/>
                         <input hidden type="text" name="lieu" id="lieu"/>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" class="btn btn-primary" style="margin-left: auto;margin-right: auto;display: flex;">Effectuer</button>
                 </form>
             </div>
         </div>
