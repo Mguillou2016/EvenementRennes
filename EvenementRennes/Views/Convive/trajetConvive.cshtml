@@ -45,10 +45,9 @@
         });*/
         VanillaRequests('GET', 'http://data.citedia.com/r1/parks/timetable-and-prices', {}, {}, true).then(function(response)
             {
-//                console.log('response', response);
                 processCSV(response);
             });
-        let location;
+        var location;
         var xhr = new XMLHttpRequest();
         xhr.open('get',
             "https://maps.googleapis.com/maps/api/geocode/json?address=@ViewData["lieu"]&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs");
@@ -85,22 +84,21 @@
     var lon = 40; // user's longitude
 
     function NearestCity(latitude, longitude) {
-        let parks = [];
-        let parkings = [];
+        var parks = [];
+        var parkings = [];
         VanillaRequests('get', 'http://data.citedia.com/r1/parks', {}, {}).then((responseText) => {
             JSON.parse(responseText).parks.forEach((park) => {
                 if (park.parkInformation.free > 10) {
                     parks.push(park);
                 }
             })
-            for (let i = 0; i < parks.length; i++) {
+            for (var i = 0; i < parks.length; i++) {
                 VanillaRequests('get',
                     "https://maps.googleapis.com/maps/api/geocode/json?address=parking%20" +
                     parks[i].parkInformation.name +
                     ", rennes&key=AIzaSyDWuVY7zg7s0MRF4Pg5xuWkGmIKCGDvoPs",
                     {},
                     {}).then((response) => {
-//                    console.log('response', parks);
                     parkings.push({
                         'id': parks[i].id,
                         'coordinates': JSON.parse(response).results[0].geometry.location,
@@ -112,7 +110,7 @@
                         parkings.sort(function(a, b) {
                             return a.dif - b.dif;
                         });
-                        let i = 0;
+                        var i = 0;
                         parkings.forEach((parking) => {
                             if (i < 3) {
                                 insRow(parking);    
@@ -165,22 +163,13 @@
     });*/
 
     function processCSV(allText) {
-        /*console.log('test duree', @ViewData["duree"])
-        console.log('inside')*/
-//        console.log('alltext',allText.split(/\r\n|\n/));
         var allTextLines = allText.split(/\r\n|\n/);
         var allTextParts= [];
         allTextLines.forEach((line) => {
              allTextParts.push(line.split(';'));    
         });
-//        console.log('allTextParts', allTextParts);
-        
-        
-        console.log('allTextParts',allTextParts)
-
-        let tarifsParkings = [];
+        var tarifsParkings = [];
         allTextParts.forEach((part) => {
-//            console.log('part', part)
             console.log('part', part[2])/*part.forEach((element) => {
                 console.log('element', element)
             })*/
